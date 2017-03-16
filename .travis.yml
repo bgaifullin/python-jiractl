@@ -1,0 +1,18 @@
+sudo: false
+language: python
+python:
+- '2.7'
+install:
+- travis_retry pip install -r requirements.txt
+- travis_retry pip install -r test-requirements.txt
+before_script: pep8 --max-line-length=120
+script: python setup.py test --addopts '-vv'
+deploy:
+  provider: pypi
+  user: bgaifullin
+  password:
+    secure: e6aJZA7Bzc45IVwZ0+Lv/Peav3QF4gFmsOW4TeZwRKZ8ElBBFs6nMW+mu7WwyhB/aGIYcaJ/mjY2/xBFy3zn4vGNpeMy7rbVrExIhRTGuYOXU+PLnorSoCj4QZGcza+k6s5a8wdDciCQWRxvxBm9ztDYolqYb+z0SqE1yRjcS1rTh+YjuYGqh2OOG0JnxQoucaJ4kBVaeoU3jvTvCx3pja8IfVN9e0nWnXDbjqpCJaBzgH0q3bbxvExflueX+EtV3/rm7Ak2kDegdy/C6IiQg69LJXPzqifgE4X+Vi12F6CLpUp5oEIawQcUq8woIK9q8Gdm8v0O2Fit1kTNaVya4wKsyYku7AJ85pLVeM12baZXEYQA+2HyHeqEFlRLw7Y2hy8hUFKNGeiKFEk7GzJI7UspQCkeW4QtgB+lyvtUOK6NQYK1RyMGlh8wQiiYlhpnE2sAerE9dh8+0FYCxSkH0wBGjOCMq8+/WkUy/pTrWzVJfM9LISkE9gPkPpQ4LXpQD9b39R55qTNOGpHlwqGY4zr3F0d2oibPLi5xFD8GQpZEiSCcYNiffkqhjb4CAaVc6zowkeIY99qqQ+Ie3KFlbJ1GW8utzxP2GDmW+YJVYI+9qWiGiiboskX05/udbof6wWd4vpaNK1kUKc+oDyTm3Q/bq2YO/Ns9n3TUvZJdvfc=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: bgaifullin/python-jiractl

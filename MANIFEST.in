@@ -1,0 +1,6 @@
+include ChangeLog
+
+include README.rst
+include *requirements.txt
+
+global-exclude *.pyc

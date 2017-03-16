@@ -1,0 +1,6 @@
+hacking>=0.10.2 # Apache-2.0
+mock>=2.0.0
+pytest>=3.0.0
+pytest-runner
+pytest-cov
+pep8
