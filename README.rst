@@ -30,7 +30,7 @@ Automated
 
 .. code-block:: bash
 
-    pip install jiractrl
+    pip install jiractl
 
 
 Manual
@@ -40,9 +40,9 @@ Manual
 
 .. code-block:: bash
 
-    git clone git://github.com/bgaifullin/python-jiractrl.git
+    git clone git://github.com/bgaifullin/python-jiractl.git
 
-2. Change into the **jiractrl** root directory.
+2. Change into the **jiractl** root directory.
 
 .. code-block:: bash
 
