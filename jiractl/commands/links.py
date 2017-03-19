@@ -13,6 +13,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import urlparse
+
 from jiractl.commands import base
 
 
@@ -42,6 +44,7 @@ class JiraLinkMixin(object):
 
     def format_remote_link(self, link):
         """Converts issue link to tuple."""
+        print(dir(link))
         return "L{0}".format(link.id), self.TYPE_REMOTE_LINK, link.object.title, link.object.url
 
 
@@ -55,7 +58,7 @@ class ListLinks(JiraLinkMixin, base.JiraList):
         return self.columns, issue_links + remote_links
 
 
-class AddLink(JiraLinkMixin, base.JiraShow):
+class AddLink(JiraLinkMixin, base.JiraCommand):
     """Adds new link."""
 
     def get_parser(self, prog_name):
@@ -63,21 +66,37 @@ class AddLink(JiraLinkMixin, base.JiraShow):
         parser.add_argument("--type", type=base.utf8, help="Link type", required=True)
         parser.add_argument("--target", type=base.utf8, help="Link target, web link or issue ID", required=True)
         parser.add_argument("--text", type=base.utf8, help="Additional text for link")
+        parser.add_argument("--icon", type=base.utf8, help="Icon for link, actual only for remote links")
 
         return parser
 
     def take_action(self, parsed_args):
         """Adds new link."""
         if parsed_args.type == self.TYPE_REMOTE_LINK:
-            data = self.format_remote_link(self.app.jira.add_simple_link(
-                parsed_args.issue, {"url": parsed_args.target, "title": parsed_args.text or parsed_args.target}
-            ))
+            data = {
+                "url": parsed_args.target,
+                "title": parsed_args.text or self._get_title(parsed_args.target),
+                "icon": {"url16x16": parsed_args.icon or self._get_favicon(parsed_args.target)},
+            }
+            link = self.app.jira.add_simple_link(parsed_args.issue, data)
+            link_id = "L{0}".format(link.id)
         else:
-            data = self.format_issue_link(self.app.jira.create_issue_link(
+            link = self.app.jira.create_issue_link(
                 parsed_args.type, parsed_args.target, parsed_args.issue, parsed_args.text
-            ))
+            )
+            link_id = "I{0}".format(link.id)
 
-        return self.columns, data
+        self.app.stdout.write("Done.\nLink ID: %s\n" % link_id)
+
+    @staticmethod
+    def _get_title(url):
+        data = urlparse.urlparse(url)
+        return urlparse.urlunparse((data[0], data[1], data[2], "", "", ""))
+
+    @staticmethod
+    def _get_favicon(url):
+        data = urlparse.urlparse(url)
+        return urlparse.urlunparse((data[0], data[1], "favicon.ico", "", "", ""))
 
 
 class ShowLink(JiraLinkMixin, base.JiraShow):

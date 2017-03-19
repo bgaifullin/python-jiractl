@@ -50,7 +50,7 @@ class BaseUnitTest(unittest.TestCase):
 
     def check_stdout(self, command, argv, message):
         app.debug("command", command, argv)
-        self.stdout.write.assert_called_once_with(message)
+        self.assertIn(message, self.stdout.write.call_args[0][0])
 
     def check_stderr(self, command, argv, exc, message):
         self.assertRaises(exc, app.debug, "command", command, argv)

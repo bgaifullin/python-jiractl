@@ -42,26 +42,34 @@ class TestAddLink(base.BaseUnitTest):
     def test_add_issue_link_with_text(self):
         self.jira.create_issue.return_value = mock.Mock()
         argv = ['--issue=ISSUE', '--type=DEPENDS', '--target=TARGET', '--text=TEXT']
-        self.check_output_one(self.command, argv)
+        self.check_stdout(self.command, argv, "Done.\nLink ID: ")
         self.jira.create_issue_link.assert_called_once_with("DEPENDS", "TARGET", "ISSUE", "TEXT")
 
     def test_add_issue_link_wo_text(self):
         self.jira.create_issue.return_value = mock.Mock()
         argv = ['--issue=ISSUE', '--type=DEPENDS', '--target=TARGET']
-        self.check_output_one(self.command, argv)
+        self.check_stdout(self.command, argv, "Done.\nLink ID: ")
         self.jira.create_issue_link.assert_called_once_with("DEPENDS", "TARGET", "ISSUE", None)
 
-    def test_add_remote_link_with_text(self):
+    def test_add_remote_link_with_text_and_icon(self):
         self.jira.create_issue.return_value = mock.Mock()
-        argv = ['--issue=ISSUE', '--type=link', '--target=TARGET', '--text=TEXT']
-        self.check_output_one(self.command, argv)
-        self.jira.add_simple_link.assert_called_once_with("ISSUE", {"url": "TARGET", "title": "TEXT"})
+        argv = ['--issue=ISSUE', '--type=link', '--target=TARGET', '--text=TEXT', '--icon=ICON']
+        self.check_stdout(self.command, argv, "Done.\nLink ID: ")
+        self.jira.add_simple_link.assert_called_once_with(
+            "ISSUE", {"url": "TARGET", "title": "TEXT", 'icon': {"url16x16": "ICON"}}
+        )
 
-    def test_add_remote_link_wo_text(self):
+    def test_add_remote_link_wo_text_and_icon(self):
         self.jira.create_issue.return_value = mock.Mock()
-        argv = ['--issue=ISSUE', '--type=link', '--target=TARGET']
-        self.check_output_one(self.command, argv)
-        self.jira.add_simple_link.assert_called_once_with("ISSUE", {"url": "TARGET", "title": "TARGET"})
+        argv = ['--issue=ISSUE', '--type=link', '--target=http://localhost/some_link?param=value']
+        self.check_stdout(self.command, argv, "Done.\nLink ID: ")
+        self.jira.add_simple_link.assert_called_once_with(
+            "ISSUE", {
+                "url": "http://localhost/some_link?param=value",
+                "title": "http://localhost/some_link",
+                "icon": {"url16x16": "http://localhost/favicon.ico"},
+            }
+        )
 
     def test_required_arguments(self):
         argv = ['--issue=ISSUE', '--type=link', '--target=TARGET']
