@@ -17,7 +17,7 @@ from jiractl.commands import base
 
 
 class JiraCommentMixin(object):
-    columns = ("id", "updated", "author", "body")
+    columns = ("id", "updated", "author", "text")
 
     def get_parser(self, prog_name):
         parser = super(JiraCommentMixin, self).get_parser(prog_name)
@@ -28,6 +28,11 @@ class JiraCommentMixin(object):
     def format_comment(comment):
         """Converts issue comment to tuple."""
         return comment.id, comment.updated,  comment.author.name, comment.body
+
+    @staticmethod
+    def format_text(text):
+        """Formats text."""
+        return text.replace("<br>", "\n")
 
 
 class ListComments(JiraCommentMixin, base.JiraList):
@@ -43,7 +48,7 @@ class AddComment(JiraCommentMixin, base.JiraShow):
 
     def get_parser(self, prog_name):
         parser = super(AddComment, self).get_parser(prog_name)
-        parser.add_argument("--body", type=base.utf8, help="Comment", required=True)
+        parser.add_argument("--text", type=base.utf8, help="Comment", required=True)
         parser.add_argument(
             "--visibility", type=base.utf8, metavar="TYPE:VALUE", help="Visibility of issue. format %(metavar)"
         )
@@ -55,7 +60,9 @@ class AddComment(JiraCommentMixin, base.JiraShow):
         if parsed_args.visibility:
             visibility = dict(zip(("type", "value"), parsed_args.visibility.split(":", 2)))
 
-        comment = self.app.jira.add_comment(parsed_args.issue, parsed_args.body, visibility=visibility)
+        comment = self.app.jira.add_comment(
+            parsed_args.issue, self.format_text(parsed_args.text), visibility=visibility
+        )
         return self.columns, self.format_comment(comment)
 
 
@@ -65,7 +72,7 @@ class EditComment(JiraCommentMixin, base.JiraCommand):
     def get_parser(self, prog_name):
         parser = super(EditComment, self).get_parser(prog_name)
         parser.add_argument("--id", type=base.utf8, help="Comment ID", required=True)
-        parser.add_argument("--body", type=base.utf8, help="Comment", required=True)
+        parser.add_argument("--text", type=base.utf8, help="Comment", required=True)
         parser.add_argument("--visibility", type=base.utf8, help="Visibility in format type:value")
         return parser
 
@@ -76,7 +83,7 @@ class EditComment(JiraCommentMixin, base.JiraCommand):
             visibility = dict(zip(("type", "value"), parsed_args.visibility.split(":", 2)))
 
         comment = self.app.jira.comment(parsed_args.issue, parsed_args.id)
-        comment.update(body=parsed_args.body, visibility=visibility)
+        comment.update(body=self.format_text(parsed_args.text), visibility=visibility)
         self.app.stdout.write("Done.\n")
 
 

@@ -37,20 +37,20 @@ class TestAddComment(base.BaseUnitTest):
 
     def test_specify_all_arguments(self):
         self.jira.create_issue.return_value = mock.Mock()
-        argv = ['--issue=ISSUE', '--body=BODY', '--visibility=TYPE:VALUE']
+        argv = ['--issue=ISSUE', '--text=TEXT1<br>TEXT2', '--visibility=TYPE:VALUE']
         self.check_output_one(self.command, argv)
         self.jira.add_comment.assert_called_once_with(
-            "ISSUE", "BODY", visibility={"type": "TYPE", "value": "VALUE"}
+            "ISSUE", "TEXT1\nTEXT2", visibility={"type": "TYPE", "value": "VALUE"}
         )
 
     def test_specify_required_arguments_only(self):
         self.jira.create_issue.return_value = mock.Mock()
-        argv = ['--issue=ISSUE', '--body=BODY']
+        argv = ['--issue=ISSUE', '--text=TEXT']
         self.check_output_one(self.command, argv)
-        self.jira.add_comment.assert_called_once_with("ISSUE", "BODY", visibility=None)
+        self.jira.add_comment.assert_called_once_with("ISSUE", "TEXT", visibility=None)
 
     def test_required_arguments(self):
-        argv = ['--issue=ISSUE', '--body=BODY']
+        argv = ['--issue=ISSUE', '--text=TEXT']
         self.check_required_arguments(self.command, argv)
 
 
@@ -58,18 +58,18 @@ class TestEditComment(base.BaseUnitTest):
     command = comments.EditComment
 
     def test_specify_all_arguments(self):
-        argv = ['--issue=ISSUE', '--id=1', '--body=BODY', '--visibility=TYPE:VALUE']
+        argv = ['--issue=ISSUE', '--id=1', '--text=TEXT1<br>TEXT2', '--visibility=TYPE:VALUE']
         self.check_stdout(self.command, argv, "Done.\n")
         self.jira.comment.assert_called_once_with("ISSUE", "1")
         self.jira.comment.return_value.update.assert_called_once_with(
-            body="BODY", visibility={"type": "TYPE", "value": "VALUE"}
+            body="TEXT1\nTEXT2", visibility={"type": "TYPE", "value": "VALUE"}
         )
 
     def test_specify_required_arguments_only(self):
-        argv = ['--issue=ISSUE', '--id=1', '--body=BODY']
+        argv = ['--issue=ISSUE', '--id=1', '--text=TEXT']
         self.check_stdout(self.command, argv, "Done.\n")
         self.jira.comment.assert_called_once_with("ISSUE", "1")
-        self.jira.comment.return_value.update.assert_called_once_with(body="BODY", visibility=None)
+        self.jira.comment.return_value.update.assert_called_once_with(body="TEXT", visibility=None)
 
     def test_required_arguments(self):
         argv = ['--issue=ISSUE', '--id=1']

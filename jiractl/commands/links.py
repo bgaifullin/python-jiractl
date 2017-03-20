@@ -19,7 +19,7 @@ from jiractl.commands import base
 
 
 class JiraLinkMixin(object):
-    columns = ("id", "type", "text", "details")
+    columns = ("id", "type", "text", "details", "icon")
 
     TYPE_REMOTE_LINK = 'link'
 
@@ -39,13 +39,17 @@ class JiraLinkMixin(object):
             link_type = link.type.inward
 
         return (
-            "I{0}".format(link.id), link_type, link_target.fields.summary, link_target.fields.status.name
+            "I{0}".format(link.id), link_type, link_target.fields.summary, link_target.fields.status.name, ""
         )
 
     def format_remote_link(self, link):
         """Converts issue link to tuple."""
-        print(dir(link))
-        return "L{0}".format(link.id), self.TYPE_REMOTE_LINK, link.object.title, link.object.url
+        try:
+            icon = link.object.icon.url16x16
+        except AttributeError:
+            icon = ""
+
+        return "L{0}".format(link.id), self.TYPE_REMOTE_LINK, link.object.title, link.object.url, icon
 
 
 class ListLinks(JiraLinkMixin, base.JiraList):
@@ -58,7 +62,7 @@ class ListLinks(JiraLinkMixin, base.JiraList):
         return self.columns, issue_links + remote_links
 
 
-class AddLink(JiraLinkMixin, base.JiraCommand):
+class AddLink(JiraLinkMixin, base.JiraShow):
     """Adds new link."""
 
     def get_parser(self, prog_name):
@@ -78,15 +82,15 @@ class AddLink(JiraLinkMixin, base.JiraCommand):
                 "title": parsed_args.text or self._get_title(parsed_args.target),
                 "icon": {"url16x16": parsed_args.icon or self._get_favicon(parsed_args.target)},
             }
-            link = self.app.jira.add_simple_link(parsed_args.issue, data)
-            link_id = "L{0}".format(link.id)
+            link_id = self.app.jira.add_simple_link(parsed_args.issue, data).id
+            link = self.format_remote_link(self.app.jira.remote_link(parsed_args.issue, link_id))
         else:
-            link = self.app.jira.create_issue_link(
+            link_id = self.app.jira.create_issue_link(
                 parsed_args.type, parsed_args.target, parsed_args.issue, parsed_args.text
-            )
-            link_id = "I{0}".format(link.id)
+            ).id
+            link = self.format_issue_link(self.app.jira.issue_link(parsed_args.issue, link_id))
 
-        self.app.stdout.write("Done.\nLink ID: %s\n" % link_id)
+        return self.columns, link
 
     @staticmethod
     def _get_title(url):
