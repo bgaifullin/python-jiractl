@@ -20,12 +20,16 @@ class JiraIssueMixin(object):
     columns = ("project", "id", "key", "summary", "type", "assignee", "status")
 
     @staticmethod
-    def format_issue(issue):
+    def format_issue(issue, custom_fields=None):
         """Converts issue to tuple."""
-        return (
+
+        result = (
             issue.fields.project.name, issue.id, issue.key, issue.fields.summary,
             issue.fields.issuetype.name, issue.fields.assignee.name, issue.fields.status.name,
         )
+        if custom_fields:
+            result += tuple(getattr(issue.fields, x) for x in custom_fields)
+        return result
 
 
 class CreateIssue(JiraIssueMixin, base.JiraShow):
@@ -76,6 +80,7 @@ class EditIssue(JiraIssueMixin, base.JiraCommand):
         parser.add_argument("--description", type=base.utf8, help="New issue description")
         parser.add_argument("--assignee", type=base.utf8, help="New issue assignee")
         parser.add_argument("--status", type=base.utf8, help="Transition issue to status")
+        parser.add_argument("--fields", nargs='+', metavar="NAME:VALUE", type=base.utf8, help="Custom fields to update")
 
         return parser
 
@@ -86,6 +91,8 @@ class EditIssue(JiraIssueMixin, base.JiraCommand):
             fields["summary"] = parsed_args.summary
         if parsed_args.description:
             fields["description"] = parsed_args.description
+        if parsed_args.fields:
+            fields.update((x.split(':', 2)) for x in parsed_args.fields)
 
         if fields:
             self.app.jira.issue(parsed_args.id).update(fields=fields)
@@ -109,7 +116,10 @@ class ShowIssue(JiraIssueMixin, base.JiraShow):
 
     def take_action(self, parsed_args):
         """Get issue by id."""
-        return self.columns, self.format_issue(self.app.jira.issue(parsed_args.id))
+        known_fields = set(self.columns)
+        custom_fields = tuple(x for x in parsed_args.columns if x not in known_fields)
+        columns = self.columns + custom_fields
+        return columns, self.format_issue(self.app.jira.issue(parsed_args.id), custom_fields)
 
 
 class ListIssues(JiraIssueMixin, base.JiraList):

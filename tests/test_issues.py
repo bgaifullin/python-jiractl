@@ -74,6 +74,15 @@ class TestEditIssue(base.BaseUnitTest):
         self.assertEqual(0, self.jira.assign_issue.call_count)
         self.assertEqual(0, self.jira.transition_issue.call_count)
 
+    def test_update_custom_fields(self):
+        argv = ['--id=1', "--fields", "custom_1:value1", "custom_2:value2"]
+        self.check_stdout(self.command, argv, "Done.\n")
+        self.jira.issue.return_value.update.assert_called_once_with(
+            fields={"custom_1": "value1", "custom_2": "value2"}
+        )
+        self.assertEqual(0, self.jira.assign_issue.call_count)
+        self.assertEqual(0, self.jira.transition_issue.call_count)
+
     def test_required_arguments(self):
         argv = ['--id=1']
         self.check_required_arguments(self.command, argv)
@@ -85,6 +94,13 @@ class TestShowIssue(base.BaseUnitTest):
     def test_success(self):
         argv = ['--id=1']
         self.check_output_one(self.command, argv)
+        self.jira.issue.assert_called_once_with("1")
+
+    def test_show_with_custom_column(self):
+        argv = ['--id=1', '-c', 'custom_1']
+        columns = self.command.columns + ("custom_1",)
+        expected_data = (mock.ANY,) * len(columns)
+        self.check_output(self.command, argv, expected_data, columns=columns)
         self.jira.issue.assert_called_once_with("1")
 
     def test_required_arguments(self):

@@ -33,12 +33,12 @@ class BaseUnitTest(unittest.TestCase):
         self.addCleanup(self.stdout.stop)
 
     @staticmethod
-    def check_output(command, argv, expected_data):
+    def check_output(command, argv, expected_data, columns=None):
         with mock.patch.object(command, 'produce_output') as output_mock:
             app.debug("command", command, argv)
 
         # parsed_args, columns, data
-        output_mock.assert_called_once_with(mock.ANY, command.columns, expected_data)
+        output_mock.assert_called_once_with(mock.ANY, columns or command.columns, expected_data)
 
     def check_output_one(self, command, argv):
         expected_data = (mock.ANY,) * len(command.columns)
