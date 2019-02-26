@@ -92,7 +92,7 @@ class EditIssue(JiraIssueMixin, base.JiraCommand):
         if parsed_args.description:
             fields["description"] = parsed_args.description
         if parsed_args.fields:
-            fields.update((x.split(':', 2)) for x in parsed_args.fields)
+            fields.update((x.split(':', 1)) for x in parsed_args.fields)
 
         if fields:
             self.app.jira.issue(parsed_args.id).update(fields=fields)
